@@ -37,7 +37,7 @@ def build_prompt(sonar_data, trivy_data):
     return prompt
 
 def call_gpt_neo(prompt, api_token):
-    API_URL = "https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-125M"
+    API_URL = "https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-125m"
     headers = {"Authorization": f"Bearer {api_token}"}
 
     payload = {
