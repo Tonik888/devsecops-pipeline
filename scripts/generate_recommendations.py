@@ -14,7 +14,7 @@ def build_prompt(sonar_data, trivy_data):
     if not issues:
         prompt += "No issues found.\n"
     else:
-        for issue in issues[:10]:  # Limit to 10 issues
+        for issue in issues[:10]:
             prompt += f"- Severity: {issue.get('severity')}, Type: {issue.get('type')}, File: {issue.get('component')}, Message: {issue.get('message')}\n"
 
     prompt += "\nTrivy Vulnerabilities:\n"
@@ -25,7 +25,7 @@ def build_prompt(sonar_data, trivy_data):
         count = 0
         for target in vulnerabilities:
             vulns = target.get('Vulnerabilities', [])
-            for vuln in vulns[:5]:  # Limit to 5 per target
+            for vuln in vulns[:5]:
                 prompt += f"- Severity: {vuln.get('Severity')}, Package: {vuln.get('PkgName')}, VulnerabilityID: {vuln.get('VulnerabilityID')}, Description: {vuln.get('Description')[:100]}...\n"
                 count += 1
                 if count >= 10:
@@ -37,7 +37,7 @@ def build_prompt(sonar_data, trivy_data):
     return prompt
 
 def call_gpt_neo(prompt, api_token):
-    API_URL = "https://api-inference.huggingface.co/models/gpt2"
+    API_URL = "https://api-inference.huggingface.co/models/distilgpt2"
     headers = {"Authorization": f"Bearer {api_token}"}
 
     payload = {
@@ -75,3 +75,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
