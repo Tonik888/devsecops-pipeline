@@ -37,7 +37,7 @@ def build_prompt(sonar_data, trivy_data):
     return prompt
 
 def call_gpt_neo(prompt, api_token):
-    API_URL = "https://api-inference.huggingface.co/models/distilgpt2"
+    API_URL = "https://api-inference.huggingface.co/distilbert/distilgpt2"
     headers = {"Authorization": f"Bearer {api_token}"}
 
     payload = {
