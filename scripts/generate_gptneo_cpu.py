@@ -1,6 +1,7 @@
+from transformers import GPTNeoForCausalLM, GPT2Tokenizer
+import torch
 import sys
 import json
-import requests
 
 def load_json(file_path):
     with open(file_path, 'r') as f:
@@ -33,46 +34,38 @@ def build_prompt(sonar_data, trivy_data):
             if count >= 10:
                 break
 
-    prompt += "\nPlease provide practical and prioritized recommendations to fix these issues."
+    prompt += "\nPlease provide practical and prioritized recommendations."
     return prompt
 
-def call_gpt_neo(prompt, api_token):
-    API_URL = "https://api-inference.huggingface.co/EleutherAI/gpt-neo-125m"
-    headers = {"Authorization": f"Bearer {api_token}"}
-
-    payload = {
-        "inputs": prompt,
-        "parameters": {"max_new_tokens": 150, "temperature": 0.7}
-    }
-
-    response = requests.post(API_URL, headers=headers, json=payload)
-    response.raise_for_status()
-
-    result = response.json()
-    if isinstance(result, list) and len(result) > 0:
-        return result[0].get('generated_text', '')
-    else:
-        return "No recommendations generated."
-
 def main():
-    if len(sys.argv) != 4:
-        print("Usage: python generate_recommendations.py <sonar-json> <trivy-json> <api-token>")
+    if len(sys.argv) != 3:
+        print("Usage: python generate_gptneo_cpu.py <sonar-json> <trivy-json>")
         sys.exit(1)
 
     sonar_file = sys.argv[1]
     trivy_file = sys.argv[2]
-    api_token = sys.argv[3]
 
     sonar_data = load_json(sonar_file)
     trivy_data = load_json(trivy_file)
 
     prompt = build_prompt(sonar_data, trivy_data)
 
-    recommendations = call_gpt_neo(prompt, api_token)
+    model_name = "EleutherAI/gpt-neo-125M"
+    tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+    model = GPTNeoForCausalLM.from_pretrained(model_name)
 
-    print("=== AI-Generated Actionable Recommendations ===\n")
-    print(recommendations)
+    device = torch.device("cpu")
+    model.to(device)
+
+    inputs = tokenizer(prompt, return_tensors="pt").to(device)
+
+    # Greedy decoding (fastest) to reduce runtime on CPU
+    outputs = model.generate(inputs['input_ids'], max_length=150, do_sample=False)
+
+    text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    print("=== GPT-Neo 125M CPU Generated Recommendations ===\n")
+    print(text)
 
 if __name__ == "__main__":
     main()
-
