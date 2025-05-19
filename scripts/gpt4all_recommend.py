@@ -4,7 +4,7 @@ from gpt4all import GPT4All
 
 def generate_recommendations(prompt, model_path):
     # Load the GPT4All model
-    gpt = GPT4All(model_path)
+    gpt = GPT4All(model_path, allow_download=False)
 
     # Generate text with max 400 tokens
     response = gpt.generate(prompt, max_tokens=400)
