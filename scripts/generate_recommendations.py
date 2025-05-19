@@ -6,7 +6,35 @@ def load_json(file_path):
     with open(file_path, 'r') as f:
         return json.load(f)
 
-# ... (build_prompt function remains unchanged) ...
+def build_prompt(sonar_data, trivy_data):
+    prompt = "Analyze the following security and code quality issues and provide actionable recommendations:\n\n"
+
+    prompt += "SonarQube Issues:\n"
+    issues = sonar_data.get('issues', [])
+    if not issues:
+        prompt += "No issues found.\n"
+    else:
+        for issue in issues[:10]:  # Limit to 10 issues
+            prompt += f"- Severity: {issue.get('severity')}, Type: {issue.get('type')}, File: {issue.get('component')}, Message: {issue.get('message')}\n"
+
+    prompt += "\nTrivy Vulnerabilities:\n"
+    vulnerabilities = trivy_data.get('Results', [])
+    if not vulnerabilities:
+        prompt += "No vulnerabilities found.\n"
+    else:
+        count = 0
+        for target in vulnerabilities:
+            vulns = target.get('Vulnerabilities', [])
+            for vuln in vulns[:5]:  # Limit to 5 per target
+                prompt += f"- Severity: {vuln.get('Severity')}, Package: {vuln.get('PkgName')}, VulnerabilityID: {vuln.get('VulnerabilityID')}, Description: {vuln.get('Description')[:100]}...\n"
+                count += 1
+                if count >= 10:
+                    break
+            if count >= 10:
+                break
+
+    prompt += "\nPlease provide practical and prioritized recommendations to fix these issues."
+    return prompt
 
 def call_gpt_neo(prompt, api_token):
     API_URL = "https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-125M"
@@ -41,6 +69,7 @@ def main():
     prompt = build_prompt(sonar_data, trivy_data)
 
     recommendations = call_gpt_neo(prompt, api_token)
+
     print("=== AI-Generated Actionable Recommendations ===\n")
     print(recommendations)
 
